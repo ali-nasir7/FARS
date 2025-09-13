@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>FARS — SSGC Field Activity Report Results</title>
+<style>
+  :root{
+    --bg: #f4f8ff;
+    --card: #ffffff;
+    --text: #0b1220;
+    --accent1: #0073e6;
+    --accent2: #00c6ff;
+    --muted: #6b7280;
+    --shadow: 0 10px 30px rgba(2,6,23,0.12);
+    --radius: 12px;
+    --col-min: 120px; /* default column min width, controlled by slider */
+  }
+
+  html,body{height:100%; margin:0; font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif; background: linear-gradient(180deg, rgba(0,115,230,0.06), rgba(0,198,255,0.02)), var(--bg); color:var(--text); -webkit-font-smoothing:antialiased;}
+
+  .page { min-height:100vh; display:flex; align-items:flex-start; justify-content:center; padding:28px; gap:28px; }
+
+  .container {
+    width:100%;
+    max-width:1200px;
+    background: var(--card);
+    border-radius:var(--radius);
+    padding:22px;
+    box-shadow: var(--shadow);
+    animation: slideUp .9s ease;
+  }
+
+  @keyframes slideUp { from{ transform: translateY(18px); opacity:0 } to{ transform:none; opacity:1 } }
+
+  .header {
+    display:flex;
+    gap:16px;
+    align-items:center;
+    justify-content:flex-start;
+    margin-bottom:14px;
+  }
+  .logo { width:56px; height:56px; border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,var(--accent2),var(--accent1)); box-shadow:0 6px 18px rgba(0,115,230,0.12); }
+  .logo img{ width:44px; height:auto; display:block; }
+  .titles { display:flex; flex-direction:column; }
+  .titles .top { font-size:14px; color:var(--muted); font-weight:600; opacity:.95; }
+  .titles .main { font-size:18px; color:var(--accent1); font-weight:800; margin-top:2px; }
+  .titles .sub { font-size:13px; color:var(--muted); margin-top:2px; }
+
+  /* toolbar (includes Back + Logout + slider + download) */
+  #toolbar {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+
+  .left-tools { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .right-tools { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+
+  .btn {
+    padding:10px 14px;
+    border-radius:10px;
+    border:none;
+    cursor:pointer;
+    font-weight:700;
+    font-size:13px;
+  }
+  .btn.primary {
+    background: linear-gradient(90deg,var(--accent1),var(--accent2));
+    color:white;
+    box-shadow: 0 8px 20px rgba(0,115,230,0.14);
+  }
+  .btn.ghost {
+    background: transparent;
+    color: var(--accent1);
+    border: 1px solid rgba(0,115,230,0.12);
+  }
+  .btn.danger {
+    background: linear-gradient(90deg,#ef4444,#dc2626);
+    color:white;
+  }
+
+  /* counts */
+  #counts { font-weight:700; color:var(--accent1); }
+
+  /* slider */
+  .col-slider { display:flex; align-items:center; gap:8px; }
+  .col-slider input[type="range"]{ width:180px; }
+
+  /* search & page size */
+  #searchBox { padding:8px 10px; border-radius:8px; border:1px solid #d1d5db; }
+  #pageSizeSelect { padding:8px;border-radius:8px;border:1px solid #d1d5db; }
+
+  /* table */
+  .table-wrap { overflow:auto; border-radius:8px; border:1px solid rgba(0,0,0,0.04); }
+  table {
+    width:100%;
+    border-collapse:collapse;
+    table-layout: auto;
+    min-width: 900px;
+  }
+  th, td {
+    padding:10px 12px;
+    border-bottom:1px solid rgba(0,0,0,0.04);
+    font-size:13px;
+    vertical-align:top;
+    min-width: var(--col-min);
+    white-space:normal;
+  }
+  thead th {
+    position:sticky;
+    top:0;
+    z-index:2;
+    background: linear-gradient(90deg,var(--accent1),var(--accent2));
+    color:#fff;
+    font-weight:700;
+    text-align:left;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+
+  tbody tr:nth-child(even){ background: rgba(2,6,23,0.02); }
+  tbody tr:hover{ background: rgba(0,115,230,0.03); transform: translateY(0); }
+
+  /* pagination */
+  #pagination { display:flex; justify-content:center; gap:6px; margin-top:14px; flex-wrap:wrap; }
+  #pagination button { padding:8px 10px; border-radius:8px; border:1px solid rgba(0,0,0,0.06); background:transparent; cursor:pointer; }
+  #pagination button.active { background: var(--accent1); color:#fff; border-color:transparent; }
+
+  /* responsive */
+  @media (max-width:900px){
+    th,td { padding:8px 10px; font-size:12px; }
+    .col-slider input[type="range"]{ width:120px; }
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="container">
+
+      <!-- Header + Title (FARS + results) -->
+      <div class="header" role="banner" aria-label="FARS header">
+        <div class="logo"><img th:src="@{/image.png}" src="/image.png" alt="SSGC logo"></div>
+        <div class="titles">
+          <div class="top">FARS</div>
+          <div class="main">SSGC Field Activity Reporting System (FARS)</div>
+          <div class="sub">Field Activity Report Results</div>
+        </div>
+      </div>
+
+      <!-- Toolbar: Back, Counts, Slider, Search, Download, Logout -->
+      <div id="toolbar" role="toolbar" aria-label="Results toolbar">
+        <div class="left-tools">
+          <button class="btn ghost" id="backBtn">⬅ Back to Dashboard</button>
+          <div id="counts">Total Records: <span id="totalCount">0</span> | Showing <span id="pageCount">0</span></div>
+        </div>
+
+        <div class="right-tools">
+          <label for="pageSizeSelect" style="font-weight:600; color:var(--muted); margin-right:6px;">Rows</label>
+          <select id="pageSizeSelect">
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+          </select>
+
+          <input id="searchBox" type="text" placeholder="Search..." aria-label="Search results">
+
+          <div class="col-slider" title="Adjust column width">
+            <label style="font-size:13px;color:var(--muted);font-weight:600;margin-right:4px;">Column width</label>
+            <input id="colWidth" type="range" min="60" max="300" value="120">
+            <span id="colWidthVal" style="width:44px; text-align:right; font-weight:700; color:var(--muted)">120px</span>
+          </div>
+
+          <button class="btn primary" id="downloadCsv">⬇ Download CSV</button>
+          <!-- Logout form: uses backend /logout so session invalidation remains backend-handled -->
+          <form th:action="@{/logout}" action="/logout" method="post" style="display:inline;margin:0;">
+            <button class="btn danger" type="submit">Logout</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrap" role="region" aria-label="Results table">
+        <table id="resultsTable" aria-describedby="counts">
+          <thead>
+            <tr>
+              <!-- show all relevant columns (no show/hide) -->
+              <th>ID</th>
+              <th>Unit</th>
+              <th>Region</th>
+              <th>Zone</th>
+              <th>Subzone</th>
+              <th>Area</th>
+              <th>FA Type</th>
+              <th>Status</th>
+              <th>Scheduled Date</th>
+              <th>FO Worked Date</th>
+              <th>Customer Name</th>
+              <th>Address</th>
+              <th>Meter No</th>
+              <th>Remarks</th>
+              <th>Reason</th>
+              <th>Route</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div id="pagination" aria-label="Pagination"></div>
+    </div>
+  </div>
+
+<script>
+/* ---------------------------
+  Note: core data / logic untouched.
+  Only UI wiring added: back button, slider controls column width.
+----------------------------*/
+
+// Load data from the same localStorage key (unchanged)
+let allData = JSON.parse(localStorage.getItem("reportData") || "[]");
+
+// Format datetime (same helper)
+const formatDateTime = dt => {
+  if(!dt) return "";
+  const d = new Date(dt);
+  return isNaN(d) ? dt : d.toLocaleDateString("en-GB")+" "+d.toLocaleTimeString("en-GB",{hour:'2-digit',minute:'2-digit'});
+};
+
+// Normalize (same mapping keys as your working code)
+allData = allData.map(r=>({
+  id: r.faId ?? "",
+  unit: r.unit ?? "",
+  region: r.region ?? "",
+  zone: r.zones ?? "",
+  subzone: r.subzone ?? "",
+  area: r.areaDescr ?? "",
+  faType: r.faType ?? "",
+  faStatus: r.faStatus ?? "",
+  schedDttm: formatDateTime(r.schedDttm),
+  foWorkedDttm: formatDateTime(r.foWorkedDttm),
+  name: r.name ?? "",
+  address: r.fullAddress ?? "",
+  meterNo: r.meterNo ?? "",
+  remarks: r.remarks ?? "",
+  reason: r.reason ?? "",
+  route: r.bookRoute ?? ""
+}));
+
+// State
+let currentPage = 1;
+let pageSize = parseInt(document.getElementById('pageSizeSelect').value);
+let searchTerm = "";
+
+// Render table page (same logic, but now shows all columns)
+function renderTablePage(page){
+  const tbody = document.querySelector('#resultsTable tbody');
+  tbody.innerHTML = '';
+
+  let filtered = allData.filter(r =>
+    Object.values(r).some(v => v.toString().toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const start = (page-1)*pageSize, end = Math.min(start+pageSize, filtered.length);
+  const pageData = filtered.slice(start,end);
+
+  if(!pageData.length){
+    tbody.innerHTML = "<tr><td colspan='16' style='text-align:center;color:var(--accent1);padding:20px;'>No data found</td></tr>";
+  } else {
+    pageData.forEach(r=>{
+      const tr = document.createElement('tr');
+      const fields = ["id","unit","region","zone","subzone","area","faType","faStatus","schedDttm","foWorkedDttm","name","address","meterNo","remarks","reason","route"];
+      fields.forEach(f=>{
+        const td = document.createElement('td');
+        td.textContent = r[f] ?? "";
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+  }
+
+  document.getElementById("totalCount").textContent = allData.length;
+  document.getElementById("pageCount").textContent = pageData.length;
+  renderPagination(filtered.length, page);
+}
+
+// Pagination (same behaviour)
+function renderPagination(total, current){
+  const pageCount = Math.ceil(total/pageSize) || 1;
+  const pagination = document.getElementById('pagination');
+  pagination.innerHTML = '';
+  if(current>1){ const b=document.createElement('button'); b.textContent="Prev"; b.onclick=()=>{ currentPage--; renderTablePage(currentPage); }; pagination.appendChild(b);}
+  for(let i=1;i<=pageCount;i++){ const b=document.createElement('button'); b.textContent=i; if(i===current) b.classList.add('active'); b.onclick=()=>{ currentPage=i; renderTablePage(i); }; pagination.appendChild(b);}
+  if(current<pageCount){ const b=document.createElement('button'); b.textContent="Next"; b.onclick=()=>{ currentPage++; renderTablePage(currentPage); }; pagination.appendChild(b);}
+}
+
+/* CSV download (unchanged logic) */
+document.getElementById('downloadCsv').addEventListener('click', ()=>{
+  if(!allData.length){ alert("No data to download!"); return; }
+  const headers = Object.keys(allData[0]);
+  let csv = headers.join(",") + "\n";
+  allData.forEach(r=>{
+    csv += headers.map(h=> `"${(r[h]??'').toString().replace(/"/g,'""')}"`).join(",")+"\n";
+  });
+  const blob = new Blob([csv], {type:'text/csv'});
+  const link = document.createElement('a'); link.href=URL.createObjectURL(blob); link.download='SSGC_Report.csv'; link.click();
+});
+
+/* Events (unchanged) */
+document.getElementById('pageSizeSelect').addEventListener('change', e=>{
+  pageSize = parseInt(e.target.value); currentPage = 1; renderTablePage(currentPage);
+});
+document.getElementById('searchBox').addEventListener('input', e=>{
+  searchTerm = e.target.value; currentPage = 1; renderTablePage(currentPage);
+});
+
+/* Back to dashboard button - navigates to selection page (frontend redirect) */
+document.getElementById('backBtn').addEventListener('click', ()=> {
+  // use same path you used earlier; this will take user back to selection page
+  window.location.href = '/selection';
+});
+
+/* Column width slider - adjusts CSS var used by th/td min-width */
+const colSlider = document.getElementById('colWidth');
+const colVal = document.getElementById('colWidthVal');
+colSlider.addEventListener('input', (e)=>{
+  const v = e.target.value;
+  document.documentElement.style.setProperty('--col-min', v + 'px');
+  colVal.textContent = v + 'px';
+});
+
+/* Init render */
+renderTablePage(currentPage);
+</script>
+</body>
+</html>
