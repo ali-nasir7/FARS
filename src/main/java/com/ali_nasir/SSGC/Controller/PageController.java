@@ -20,4 +20,8 @@ public class PageController {
     public String resultPage() {
         return "result"; 
     }
+    @GetMapping("/analysis")
+    public String analysisPage(){
+        return "analysis";
+    }
 }

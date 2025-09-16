@@ -2,7 +2,6 @@ package com.ali_nasir.SSGC.Controller;
 
 import com.ali_nasir.SSGC.Repository.LocationsRepository;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController

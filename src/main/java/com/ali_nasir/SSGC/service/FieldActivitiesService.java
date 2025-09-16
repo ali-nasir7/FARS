@@ -3,7 +3,9 @@ package com.ali_nasir.SSGC.service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,8 @@ public class FieldActivitiesService {
         s = s.trim();
         return s.isEmpty() ? null : s;
     }
+
+    
 
       @Transactional(readOnly = true)
     public List<String> findDistinctFaStatus() {
@@ -50,13 +54,15 @@ public class FieldActivitiesService {
                          .collect(Collectors.toList());
     }
 
- @Transactional(readOnly = true)
-public List<FieldActivityDTO> searchActivities(
+
+@Transactional(readOnly = true)
+public Page<FieldActivityDTO> searchActivities(
     String unit, String region, String zone, String subzone, String area,
     String faType, String faStatus,
-    LocalDateTime startDate, LocalDateTime endDate
+    LocalDateTime startDate, LocalDateTime endDate,
+    int page, int size
 ) {
-    // normalize all text filters
+    
     unit = normalize(unit);
     region = normalize(region);
     zone = normalize(zone);
@@ -65,7 +71,9 @@ public List<FieldActivityDTO> searchActivities(
     faType = normalize(faType);
     faStatus = normalize(faStatus);
 
-    // call repository query with normalized params
+    Pageable pageable = PageRequest.of(page, size);
+
+    // call repository query with pagination support
     return repository.searchActivities(
         unit,
         region,
@@ -75,7 +83,10 @@ public List<FieldActivityDTO> searchActivities(
         faType,
         faStatus,
         startDate,
-        endDate
+        endDate,
+        pageable
     );
 }
+
+
 }

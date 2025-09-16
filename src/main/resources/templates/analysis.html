@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Field Activity Analysis</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" th:href="@{/css/analysis.css}">
+</head>
+<body>
+
+<h1>Field Activity Analysis</h1>
+
+<!-- Activity Selection -->
+<div class="controls">
+  <select id="faTypeSelect">
+    <option value="">-- Select Field Activity --</option>
+  </select>
+  <button onclick="viewAnalysis()">View Analysis</button>
+</div>
+
+<!-- Summary Section -->
+<div class="chart-container">
+  <h3>Analysis Summary</h3>
+  <div class="summary">
+    <p><b>Prediction (Next Month):</b> <span id="prediction">-</span></p>
+    <p><b>Change from Last Month:</b> <span id="percentage">-</span>%</p>
+  </div>
+</div>
+
+<!-- Bar Chart -->
+<div class="chart-container">
+  <h3>Monthly Activity Counts</h3>
+  <canvas id="barChart"></canvas>
+</div>
+
+<!-- Line Chart -->
+<div class="chart-container">
+  <h3>Activity Trend</h3>
+  <canvas id="lineChart"></canvas>
+</div>
+
+<!-- Pie Chart -->
+<div class="chart-container">
+  <h3>Activity Distribution</h3>
+  <canvas id="pieChart"></canvas>
+</div>
+
+<!-- Error Message -->
+<p id="error" class="error"></p>
+
+<!-- JS -->
+<script th:src="@{/js/analysis.js}"></script>
+</body>
+</html>

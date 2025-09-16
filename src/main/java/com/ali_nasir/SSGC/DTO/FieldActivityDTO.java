@@ -7,7 +7,7 @@ import lombok.Data;
 @Data
 public class FieldActivityDTO {
 
-    private String faId;   // <-- Long ko String kar do
+    private String faId;   
     private String faType;
     private String faStatus;
     private String unit;

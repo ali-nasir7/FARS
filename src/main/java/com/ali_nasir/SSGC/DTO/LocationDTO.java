@@ -8,11 +8,11 @@ public class LocationDTO {
     private String subZoneDescr;
     private String areaDescr;
 
-    // Default constructor (no-args)
+   
     public LocationDTO() {
     }
 
-    // All-args constructor
+    
     public LocationDTO(Long id, String unitDescr, String regionDescr, String zoneDescr, String subZoneDescr, String areaDescr) {
         this.id = id;
         this.unitDescr = unitDescr;
